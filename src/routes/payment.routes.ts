@@ -14,9 +14,9 @@ router.get('/order/:orderId', PaymentController.getOrder);
 
 router.post('/process', validateBody(paymentProcessSchema), PaymentController.processPayment);
 
-router.post('/mercadopago', PaymentController.mercadoPago)
+router.get('/mercadopago', PaymentController.mercadoPago)
 
-router.post('/mercadopago/webhook', PaymentController.postPaymentWebhook)
+router.post('/mercadopago/webhook', PaymentController.webhookMercadoPago)
 
 router.post('/paypal', PaymentController.paypal)
 

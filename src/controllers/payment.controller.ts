@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
 import logger from '../config/logger';
 import prisma from '../config/database';
-import { validateJumpsellerSignature, JumpsellerParams } from '../utils/hmac';
+import { validateJumpsellerSignature, JumpsellerParams, generateJumpsellerSignature } from '../utils/hmac';
 import { MercadoPagoService } from '../services/mercadopago.service';
 import { PayPalService } from '../services/paypal.service';
 import { BinancePayService } from '../services/binance.service';
 import { CurrencyService } from '../services/currency.service';
 import { JumpsellerService } from '../services/jumpseller.service';
 import { addCallbackJob } from '../queues/callback.queue';
+import { JumpSellerRequest } from '@/types/jumpseller';
 
 export class PaymentController {
   static async initPayment(req: Request, res: Response) {
@@ -28,7 +29,7 @@ export class PaymentController {
         return res.status(500).json({ error: 'Server configuration error' });
       }
 
-      const isValidSignature = validateJumpsellerSignature(jumpsellerParams, secret);
+      const isValidSignature = validateJumpsellerSignature(jumpsellerParams);
       if (!isValidSignature) {
         logger.warn('Invalid HMAC signature', {
           reference: jumpsellerParams.x_reference,
@@ -284,31 +285,44 @@ export class PaymentController {
   }
   static async mercadoPago(req: Request, res: Response) {
     try {
-      const { body } = req
-      console.log('CUERPO DE LA PETICION', body)
-      const urlToRedirect = await MercadoPagoService.createTransaction(body)
 
-      if (!urlToRedirect) {
-        logger.error('Error processing payment, no url to redirect', {
-          body
+      const data: JumpSellerRequest = req.body
+
+      logger.info('Processing Mercadopago payment (payment.controller)', {
+        x_account_id: data.x_account_id,
+        x_reference: data.x_reference
+      })
+
+      if (!data.x_account_id || !data.x_reference || !data.x_amount || !data.x_customer_email || !data.x_signature) {
+        logger.error('Missing fields on request', {
+          x_account_id: data.x_account_id,
+          x_reference: data.x_reference
         })
+        return res.status(400).json({ error: 'Missing fields on request' });
       }
 
-      return res.status(200).json({ url: urlToRedirect });
+      const urlToRedirect = await MercadoPagoService.createTransaction(data)
+
+
+      return res.status(200).redirect(urlToRedirect!)
 
     } catch (error) {
-      logger.error('Error processing payment', { x_reference: req.body.x_reference })
+      logger.error('Error processing MercadoPago payment', {
+        x_account_id: req.body.x_account_id,
+        x_reference: req.body.x_reference
+      })
+      console.log(error)
       return res.status(500).json({ error })
     }
   }
 
-  static async postPaymentWebhook(req: Request, res: Response) {
+  static async webhookMercadoPago(req: Request, res: Response) {
 
-    logger.info('Payment webhook received', { body: req.body })
+    logger.info('Payment webhook received (payment.controller)', { data: req.body })
 
-    await MercadoPagoService.completeTransaction(req.body)
+    await MercadoPagoService.webhookPostTransaction(req.body)
 
-    logger.info('Payment webhook processed', { data: req.body })
+    logger.info('Payment webhook processed (payment.controller)', { data: req.body })
 
     return res.status(200).json({ success: true });
 
