@@ -99,7 +99,7 @@ async function startServer() {
   try {
 
     //await redisClient.connect();
-    logger.info('✅ Connected to Redis');
+    //logger.info('✅ Connected to Redis');
 
 
     app.listen(PORT, () => {
