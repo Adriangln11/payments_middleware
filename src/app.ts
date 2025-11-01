@@ -6,10 +6,7 @@ import rateLimit from 'express-rate-limit';
 import logger from './config/logger';
 
 import paymentRoutes from './routes/payment.routes';
-import callbackRoutes from './routes/callback.routes';
-import webhookRoutes from './routes/webhook.routes';
 import authRoutes from './routes/auth.routes';
-import adminRoutes from './routes/admin.routes';
 
 import './queues/callback.queue';
 
@@ -60,10 +57,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/payment', paymentRoutes);
-app.use('/api/callback', callbackRoutes);
-app.use('/api/webhook', webhookRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
 
 
 app.use('*', (req, res) => {
