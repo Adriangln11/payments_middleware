@@ -2,6 +2,8 @@ import { JumpSellerRequest } from '@/types/jumpseller';
 import logger from '../config/logger';
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago'
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export interface MercadoPagoPaymentRequest {
   orderId: string;
@@ -25,95 +27,9 @@ export class MercadoPagoService {
   private static client = new MercadoPagoConfig({
     accessToken: process.env.DEV_ACCESS_TOKEN_MP || '',
   })
-
-  private static getAccessToken(country: string): string {
-    const tokens = {
-      AR: process.env.MERCADOPAGO_ACCESS_TOKEN_AR,
-      MX: process.env.MERCADOPAGO_ACCESS_TOKEN_MX,
-      CL: process.env.MERCADOPAGO_ACCESS_TOKEN_CL,
-    };
-
-    const token = tokens[country as keyof typeof tokens];
-    if (!token) {
-      throw new Error(`MercadoPago access token not configured for country: ${country}`);
-    }
-
-    return token;
-  }
-
-  static async createPayment(
-    request: MercadoPagoPaymentRequest,
-    country: string
-  ): Promise<MercadoPagoPaymentResponse> {
-    logger.info('Creating MercadoPago payment', { orderId: request.orderId, country });
-
-    try {
-
-      const accessToken = this.getAccessToken(country);
-      logger.debug('Using access token for country', { country, hasToken: !!accessToken });
-
-      // Mock MercadoPago API response
-      const mockResponse: MercadoPagoPaymentResponse = {
-        id: `mp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        initPoint: `${process.env.FRONTEND_URL}/mock/mercadopago/checkout?order=${request.orderId}&country=${country}`,
-        status: 'pending'
-      };
-
-      logger.info('MercadoPago payment created successfully', {
-        orderId: request.orderId,
-        mpId: mockResponse.id,
-        initPoint: mockResponse.initPoint
-      });
-
-      return mockResponse;
-
-    } catch (error) {
-      logger.error('Error creating MercadoPago payment', {
-        orderId: request.orderId,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      throw error;
-    }
-  }
-
-  static async getPaymentStatus(paymentId: string, country: string): Promise<string> {
-    logger.info('Getting MercadoPago payment status', { paymentId, country });
-
-    try {
-
-      const statuses = ['pending', 'approved', 'rejected', 'cancelled'];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-      logger.info('MercadoPago payment status retrieved', { paymentId, status: randomStatus });
-
-      return randomStatus;
-
-    } catch (error) {
-      logger.error('Error getting MercadoPago payment status', {
-        paymentId,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      throw error;
-    }
-  }
-
-  static getSupportedCountries(): string[] {
-    return ['AR', 'MX', 'CL'];
-  }
-
-  static getSupportedCurrencies(): Record<string, string> {
-    return {
-      AR: 'ARS',
-      MX: 'MXN',
-      CL: 'CLP'
-    };
-  }
-
-  static isCountrySupported(country: string): boolean {
-    return this.getSupportedCountries().includes(country.toUpperCase());
-  }
-
   static async createTransaction(data: JumpSellerRequest) {
+
+    const APIMPURL = "https://api.mercadopago.com/checkout/preferences"
     try {
       logger.info('Creating MercadoPago preference', {
         x_account_id: data.x_account_id,
@@ -184,7 +100,7 @@ export class MercadoPagoService {
             pending: "https://yahoo.com",
             failure: "https://github.com"
           },
-          notification_url: `${process.env.BASE_URL}/api/payment/mercadopago/webhook`,
+          //notification_url: `${process.env.BASE_URL}/api/payment/mercadopago/webhook`,
           metadata: {
             orderData: data
           }
