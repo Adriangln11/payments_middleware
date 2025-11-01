@@ -5,23 +5,6 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export interface MercadoPagoPaymentRequest {
-  orderId: string;
-  amount: number;
-  currency: string;
-  description: string;
-  externalReference: string;
-  returnUrl: string;
-  cancelUrl: string;
-  notificationUrl: string;
-}
-
-export interface MercadoPagoPaymentResponse {
-  id: string;
-  initPoint: string;
-  status: string;
-}
-
 export class MercadoPagoService {
 
   private static client = new MercadoPagoConfig({

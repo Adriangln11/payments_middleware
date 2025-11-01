@@ -46,7 +46,7 @@ export class PaymentController {
   static async initPaymentProcess(req: Request, res: Response) {
 
     try {
-      const data = mockData
+      const data = req.body
       const params = new URLSearchParams(data).toString()
 
       return res.status(200).redirect(`/index.html?${params}`)

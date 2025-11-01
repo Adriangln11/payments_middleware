@@ -1,116 +1,11 @@
 import axios from 'axios';
 import logger from '../config/logger';
+import { JumpSellerRequest } from '@/types/jumpseller';
 
-export interface PayPalPaymentRequest {
-  orderId: string;
-  amount: number;
-  currency: string;
-  description: string;
-  returnUrl: string;
-  cancelUrl: string;
-}
-
-export interface PayPalPaymentResponse {
-  id: string;
-  approvalUrl: string;
-  status: string;
-}
 
 export class PayPalService {
-  private static getCredentials() {
-    const clientId = process.env.PAYPAL_CLIENT_ID;
-    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-    const mode = process.env.PAYPAL_MODE || 'sandbox';
 
-    if (!clientId || !clientSecret) {
-      throw new Error('PayPal credentials not configured');
-    }
-
-    return { clientId, clientSecret, mode };
-  }
-
-  static async createPayment(request: PayPalPaymentRequest): Promise<PayPalPaymentResponse> {
-    logger.info('Creating PayPal payment', { orderId: request.orderId });
-
-    try {
-      const credentials = this.getCredentials();
-      logger.debug('Using PayPal credentials', { mode: credentials.mode, hasCredentials: !!credentials.clientId });
-
-
-      const mockResponse: PayPalPaymentResponse = {
-        id: `pp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        approvalUrl: `${process.env.FRONTEND_URL}/mock/paypal/checkout?order=${request.orderId}`,
-        status: 'CREATED'
-      };
-
-      logger.info('PayPal payment created successfully', {
-        orderId: request.orderId,
-        ppId: mockResponse.id,
-        approvalUrl: mockResponse.approvalUrl
-      });
-
-      return mockResponse;
-
-    } catch (error) {
-      logger.error('Error creating PayPal payment', {
-        orderId: request.orderId,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      throw error;
-    }
-  }
-
-  static async capturePayment(paymentId: string): Promise<string> {
-    logger.info('Capturing PayPal payment', { paymentId });
-
-    try {
-
-      const statuses = ['COMPLETED', 'FAILED', 'PENDING'];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-      logger.info('PayPal payment captured', { paymentId, status: randomStatus });
-
-      return randomStatus;
-
-    } catch (error) {
-      logger.error('Error capturing PayPal payment', {
-        paymentId,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      throw error;
-    }
-  }
-
-  static async getPaymentStatus(paymentId: string): Promise<string> {
-    logger.info('Getting PayPal payment status', { paymentId });
-
-    try {
-
-      const statuses = ['CREATED', 'APPROVED', 'COMPLETED', 'CANCELLED', 'FAILED'];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-      logger.info('PayPal payment status retrieved', { paymentId, status: randomStatus });
-
-      return randomStatus;
-
-    } catch (error) {
-      logger.error('Error getting PayPal payment status', {
-        paymentId,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      throw error;
-    }
-  }
-
-  static getSupportedCurrencies(): string[] {
-    return ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'ARS', 'MXN', 'CLP', 'COP'];
-  }
-
-  static isCurrencySupported(currency: string): boolean {
-    return this.getSupportedCurrencies().includes(currency.toUpperCase());
-  }
-
-  static async createTransaction(order: any) {
+  static async createTransaction(order: JumpSellerRequest) {
 
     try {
       logger.info('Processing PayPal payment', { order })
