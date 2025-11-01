@@ -29,7 +29,6 @@ export class MercadoPagoService {
   })
   static async createTransaction(data: JumpSellerRequest) {
 
-    const APIMPURL = "https://api.mercadopago.com/checkout/preferences"
     try {
       logger.info('Creating MercadoPago preference', {
         x_account_id: data.x_account_id,
@@ -96,11 +95,11 @@ export class MercadoPagoService {
           //   }
           // },
           back_urls: {
-            success: "https://google.com",
-            pending: "https://yahoo.com",
-            failure: "https://github.com"
+            success: data.x_url_complete,
+            pending: data.x_url_callback,
+            failure: data.x_url_cancel
           },
-          //notification_url: `${process.env.BASE_URL}/api/payment/mercadopago/webhook`,
+          notification_url: `${process.env.BASE_URL}/api/payment/mercadopago/webhook`,
           metadata: {
             orderData: data
           }

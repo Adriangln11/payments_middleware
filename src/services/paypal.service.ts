@@ -129,16 +129,37 @@ export class PayPalService {
           }
         }
       )
+      const formatedOrder = {
+        intent: "CAPTURE",
+        payment_source: {
+          paypal: {
+            experience_context: {
+              payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+              landing_page: "BILLING",
+              shipping_preference: "GET_FROM_FILE",
+              user_action: "PAY_NOW",
+              return_url: order.x_url_complete,
+              cancel_url: order.x_url_cancel
+            }
+          }
+        },
+        purchase_units: [
+          {
+            amount: {
+              currency_code: order.x_currency,
+              value: order.x_amount
+            }
+          }
+        ]
+      }
 
-      const res = await axios.post(`${process.env.URL_API_PAYPAL}/v2/checkout/orders`, order, {
+      const res = await axios.post(`${process.env.URL_API_PAYPAL}/v2/checkout/orders`, formatedOrder, {
         headers: {
           'Authorization': `Bearer ${access_token}`
         }
-      }
-      )
-      console.log(res.data)
+      })
 
-      return res.data
+      return res.data;
     } catch (error) {
       logger.error('Error processing PayPal payment', { order })
       throw error;

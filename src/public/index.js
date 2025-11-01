@@ -5,18 +5,36 @@ const urlParams = new URLSearchParams(window.location.search)
 const paymentData = Object.fromEntries(urlParams.entries())
 
 paypalBtn.addEventListener('click', async () => {
-  console.log('PRESSED PAYPAL')
-  console.log(paymentData)
-})
-
-mercadopagoBtn.addEventListener('click', async () => {
-  console.log('PRESSED MERCADOPAGO')
-  console.log(paymentData)
-  await fetch('/api/payment/mercadopago', {
+  const res = await fetch('/api/payment/paypal', {
     method: 'POST',
     headers: {
       "Content-Type": 'application/json'
     },
     body: JSON.stringify(paymentData)
   })
+
+  const data = await res.json()
+  if (data.links[1].href) {
+    window.location.href = data.links[1].href
+  } else {
+    console.error('Error processing PayPal payment', data)
+  }
+})
+
+mercadopagoBtn.addEventListener('click', async () => {
+
+  const res = await fetch('/api/payment/mercadopago', {
+    method: 'POST',
+    headers: {
+      "Content-Type": 'application/json'
+    },
+    body: JSON.stringify(paymentData)
+  })
+
+  const data = await res.json()
+  if (data.url) {
+    window.location.href = data.url
+  } else {
+    console.error('Error processing MercadoPago payment', data)
+  }
 })

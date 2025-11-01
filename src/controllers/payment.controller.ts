@@ -46,8 +46,6 @@ export class PaymentController {
   static async initPaymentProcess(req: Request, res: Response) {
 
     try {
-      console.log(mockData)
-      //const data = req.body
       const data = mockData
       const params = new URLSearchParams(data).toString()
 
@@ -82,7 +80,7 @@ export class PaymentController {
       const urlToRedirect = await MercadoPagoService.createTransaction(data)
 
 
-      return res.status(200).redirect(urlToRedirect!)
+      return res.status(200).json({ url: urlToRedirect })
 
     } catch (error) {
       logger.error('Error processing MercadoPago payment', {
