@@ -14,7 +14,7 @@ const router: Router = Router();
 
 // router.post('/process', validateBody(paymentProcessSchema), PaymentController.processPayment);
 
-router.get('/', PaymentController.initPaymentProcess)
+router.post('/', PaymentController.initPaymentProcess)
 
 router.post('/mercadopago', PaymentController.mercadoPago)
 
