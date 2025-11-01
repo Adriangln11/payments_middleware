@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Checkout — Completa tu compra</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --accent: #0b74ff;
+      --text: #0f172a;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --radius: 14px;
+      --shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+      --paypal: #ffffff;
+      --mp: #f4ff59;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg), #eef2f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .checkout-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-width: 900px;
+      width: 100%;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .summary {
+      background: #f1f5f9;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .summary h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .item img {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-right: 12px;
+    }
+
+    .item-details {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+
+    .payment-section {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .brand .logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #e0edff, #ffffff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: var(--accent);
+      font-size: 20px;
+    }
+
+    .payment-section h1 {
+      font-size: 22px;
+      margin: 0;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    aside {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .keyexpress-logo {
+      width: 100px;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn img {
+      width: 150px;
+    }
+
+    .btn.paypal {
+      background: var(--paypal);
+      color: white;
+    }
+
+    .btn.mercadopago {
+      background: var(--mp);
+      color: white;
+    }
+
+    .btn.guest {
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--accent);
+    }
+
+    .secure {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 20px;
+    }
+
+    .secure svg {
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+      vertical-align: middle;
+      fill: var(--accent);
+    }
+
+    @media (max-width: 700px) {
+      .checkout-container {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        order: 2;
+      }
+
+      .payment-section {
+        order: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="checkout-container">
+    <section class="payment-section">
+      <div class="brand">
+        <div class="logo">TP</div>
+        <div>
+          <h1>Finaliza tu compra</h1>
+          <p class="lead">Selecciona tu método de pago preferido.</p>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button class="btn paypal" id="btn-paypal">
+          <img src="/paypal.png" alt="logo paypal">
+        </button>
+        <button class="btn mercadopago" id="btn-mercado">
+          <img src="/mercadopago.svg" alt="logo mercadopago">
+        </button>
+        <button class="btn guest" id="btn-guest">👤 Pagar como invitado</button>
+      </div>
+
+      <div class="secure">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path
+            d="M12 1a5 5 0 0 0-5 5v3H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10a1 1 0 0 0-1-1h-1V6a5 5 0 0 0-5-5zm-3 5a3 3 0 0 1 6 0v3H9V6zm3 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
+        </svg>
+        Pago seguro con encriptación SSL
+      </div>
+    </section>
+
+    <aside class="summary">
+      <img src="/keyexpress.webp" alt="" id="keyexpress-logo">
+      <!-- <h2>Resumen de compra</h2>
+      <ul class="item-list">
+        <li class="item">
+          <div class="item-details">
+            <img src="https://via.placeholder.com/50" alt="Producto 1">
+            <span>Pulsera de plata</span>
+          </div>
+          <span>$899.00</span>
+        </li>
+        <li class="item">
+          <div class="item-details">
+            <img src="https://via.placeholder.com/50" alt="Producto 2">
+            <span>Medalla dorada</span>
+          </div>
+          <span>$400.00</span>
+        </li>
+      </ul>
+      <div class="total">
+        <span>Total</span>
+        <span>$1,299.00 MXN</span>
+      </div> -->
+    </aside>
+  </main>
+
+  <script src="/index.js">
+  </script>
+</body>
+
+</html>

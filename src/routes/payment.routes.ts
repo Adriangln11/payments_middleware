@@ -6,13 +6,15 @@ import { jumpsellerPaymentSchema, paymentProcessSchema } from '../utils/validati
 const router: Router = Router();
 
 
-router.post('/init', validateBody(jumpsellerPaymentSchema), PaymentController.initPayment);
+// router.post('/init', validateBody(jumpsellerPaymentSchema), PaymentController.initPayment);
 
 
-router.get('/order/:orderId', PaymentController.getOrder);
+// router.get('/order/:orderId', PaymentController.getOrder);
 
 
-router.post('/process', validateBody(paymentProcessSchema), PaymentController.processPayment);
+// router.post('/process', validateBody(paymentProcessSchema), PaymentController.processPayment);
+
+router.get('/', PaymentController.initPaymentProcess)
 
 router.post('/mercadopago', PaymentController.mercadoPago)
 
