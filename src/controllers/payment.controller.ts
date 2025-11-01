@@ -4,13 +4,51 @@ import { MercadoPagoService } from '../services/mercadopago.service';
 import { PayPalService } from '../services/paypal.service';
 import { JumpSellerRequest } from '@/types/jumpseller';
 
+const mockData = {
+  "x_url_callback": "https://mi-tienda.com/api/payment/callback",
+  "x_url_complete": "https://mi-tienda.com/checkout/complete",
+  "x_url_cancel": "https://mi-tienda.com/checkout/cancel",
+  "x_account_id": "123456",
+  "x_amount": "149.99",
+  "x_currency": "USD",
+  "x_reference": "ORDER-2025-0001",
+  "x_shop_country": "US",
+  "x_shop_name": "MiTiendaOnline",
+  "x_description": "Compra de productos electrónicos",
+  "x_customer_first_name": "Carlos",
+  "x_customer_last_name": "Pérez",
+  "x_customer_email": "carlos.perez@example.com",
+  "x_customer_phone": "+17861234567",
+  "x_customer_shipping_first_name": "Carlos",
+  "x_customer_shipping_last_name": "Pérez",
+  "x_customer_shipping_city": "Miami",
+  "x_customer_shipping_address1": "1234 NW 5th St",
+  "x_customer_shipping_address2": "Apto 3B",
+  "x_customer_shipping_state": "FL",
+  "x_customer_shipping_zip": "33101",
+  "x_customer_shipping_country": "US",
+  "x_customer_shipping_phone": "+17861234567",
+  "x_customer_billing_first_name": "Carlos",
+  "x_customer_billing_last_name": "Pérez",
+  "x_customer_billing_city": "Miami",
+  "x_customer_billing_address1": "1234 NW 5th St",
+  "x_customer_billing_address2": "Apto 3B",
+  "x_customer_billing_state": "FL",
+  "x_customer_billing_zip": "33101",
+  "x_customer_billing_country": "US",
+  "x_customer_billing_phone": "+17861234567",
+  "x_customer_taxid": "123456789",
+  "x_signature": "4f8b9c2d3e7a11f5c4b2a0f7d1e6c9b8"
+}
+
+
 export class PaymentController {
   static async initPaymentProcess(req: Request, res: Response) {
 
     try {
-      console.log(req.body)
-      const data = req.body
-
+      console.log(mockData)
+      //const data = req.body
+      const data = mockData
       const params = new URLSearchParams(data).toString()
 
       return res.status(200).redirect(`/index.html?${params}`)
