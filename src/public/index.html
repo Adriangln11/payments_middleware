@@ -206,6 +206,125 @@
       fill: var(--accent);
     }
 
+    .company-logo {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .keyexpress-logo {
+      width: 120px;
+      height: auto;
+    }
+
+    .order-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .order-header h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .order-ref {
+      font-size: 12px;
+      color: var(--muted);
+      background: #f8fafc;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .order-details {
+      margin-top: 16px;
+    }
+
+    .store-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .store-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .store-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .customer-section h3 {
+      font-size: 16px;
+      margin: 0 0 12px 0;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .customer-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .customer-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .customer-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .customer-icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .total-section {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+
+    .total-line.final {
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      padding-top: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
     @media (max-width: 700px) {
       .checkout-container {
         grid-template-columns: 1fr;
@@ -259,28 +378,54 @@
     </section>
 
     <aside class="summary">
-      <img src="/keyexpress.webp" alt="" id="keyexpress-logo">
-      <!-- <h2>Resumen de compra</h2>
-      <ul class="item-list">
-        <li class="item">
-          <div class="item-details">
-            <img src="https://via.placeholder.com/50" alt="Producto 1">
-            <span>Pulsera de plata</span>
+      <div class="company-logo">
+        <img src="/keyexpress.webp" alt="KeyExpress" class="keyexpress-logo">
+      </div>
+      
+      <h2>Resumen de compra</h2>
+      
+      <div class="order-card">
+        <div class="order-header">
+          <h3 id="description">Descripción del producto</h3>
+          <span class="order-ref">Ref: <span id="reference">-</span></span>
+        </div>
+        
+        <div class="order-details">
+          <div class="store-info">
+            <span class="store-label">Vendido por</span>
+            <span class="store-name" id="shop-name">-</span>
           </div>
-          <span>$899.00</span>
-        </li>
-        <li class="item">
-          <div class="item-details">
-            <img src="https://via.placeholder.com/50" alt="Producto 2">
-            <span>Medalla dorada</span>
+        </div>
+      </div>
+
+      <div class="customer-section">
+        <h3>Datos de facturación</h3>
+        <div class="customer-card">
+          <div class="customer-row">
+            <span class="customer-icon">👤</span>
+            <span id="customer-name">-</span>
           </div>
-          <span>$400.00</span>
-        </li>
-      </ul>
-      <div class="total">
-        <span>Total</span>
-        <span>$1,299.00 MXN</span>
-      </div> -->
+          <div class="customer-row">
+            <span class="customer-icon">📧</span>
+            <span id="customer-email">-</span>
+          </div>
+          <div class="customer-row">
+            <span class="customer-icon">📱</span>
+            <span id="customer-phone">-</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="total-section">
+        <div class="total-line">
+          <span>Subtotal</span>
+          <span id="subtotal">$0.00</span>
+        </div>
+        <div class="total-line final">
+          <span>Total a pagar</span>
+          <span id="amount">$0.00</span>
+        </div>
+      </div>
     </aside>
   </main>
 
