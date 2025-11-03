@@ -6,8 +6,7 @@ const paymentData = Object.fromEntries(urlParams.entries())
 
 function populatePurchaseData() {
 
-  document.getElementById('description').textContent = paymentData.x_description || 'Descripción del producto';
-  paymentData.x_description = paymentData.x_description.replace(/\\n/g, ' ');
+  document.getElementById('description').textContent = paymentData.x_description.replaceAll(/\\n/g, '\n') || 'Descripción del producto';
   document.getElementById('reference').textContent = paymentData.x_reference || '-';
   document.getElementById('shop-name').textContent = paymentData.x_shop_name || '-';
 
