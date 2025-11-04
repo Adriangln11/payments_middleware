@@ -14,7 +14,41 @@ const app: express.Application = express();
 const PORT = process.env.PORT || 3000;
 
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://www.paypal.com",
+        "https://js.paypal.com",
+        "https://*.paypal.com"
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "https://www.paypal.com",
+        "https://*.paypal.com"
+      ],
+      connectSrc: [
+        "'self'",
+        "https://api.paypal.com",
+        "https://api-m.paypal.com",
+        "https://*.paypal.com"
+      ],
+      frameSrc: [
+        "'self'",
+        "https://www.paypal.com",
+        "https://*.paypal.com"
+      ]
+    }
+  }
+}));
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
