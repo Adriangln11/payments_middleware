@@ -129,7 +129,42 @@ export class PaymentController {
     logger.info('PayPal webhook processed', { data: req.body })
 
     return res.status(200).json({ success: true });
+  }
 
+  static async paymentCompleted(req: Request, res: Response) {
+
+    try {
+
+      logger.info('Payment completed, redirecting to completed page (payment.controller)', { x_reference: req.body.x_reference })
+      const data = req.body
+      const params = new URLSearchParams(data).toString()
+
+      const url = `/completed.html?${params}`
+      return res.status(200).json({ success: true, url })
+    }
+    catch (error) {
+      logger.error('Error completing payment (payment.controller)', { error })
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  static async getPayPalConfig(req: Request, res: Response) {
+    try {
+      const clientId = process.env.CLIENT_ID_PAYPAL;
+      logger.info('Getting PayPal config for client')
+      if (!clientId) {
+        logger.error('PayPal Client ID not configured in environment variables');
+        return res.status(500).json({ error: 'PayPal configuration missing' });
+      }
+
+      return res.status(200).json({
+        clientId,
+        environment: process.env.PAYPAL_MODE || 'sandbox'
+      });
+    } catch (error) {
+      logger.error('Error getting PayPal config', { error });
+      return res.status(500).json({ error: 'Internal server error' });
+    }
   }
 }
 
