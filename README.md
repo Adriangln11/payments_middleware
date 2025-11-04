@@ -1,12 +1,77 @@
-# Payment Gateway API Documentation
+# 💳 Payment Gateway API - Jumpseller Integration
 
-## Overview
-Esta API proporciona endpoints para procesamiento de pagos a través de MercadoPago y PayPal, incluyendo webhooks para notificaciones de estado de pago.
+## 📋 Overview
+Gateway de pagos robusto que integra múltiples procesadores de pago (MercadoPago, PayPal) con soporte para guest checkout y webhooks. Diseñado específicamente para integraciones con Jumpseller y otras plataformas de e-commerce.
 
-## Base URL
+### ✨ Features
+- **Multi-Gateway Support**: MercadoPago, PayPal con guest checkout
+- **Security**: HMAC signature validation, rate limiting, CSP headers
+- **Webhooks**: Notificaciones automáticas de estado de pago
+- **Countries**: Soporte para Argentina, México, Chile, Estados Unidos
+- **Frontend**: Interface de checkout responsiva incluida
+- **Monitoring**: Logging estructurado con Winston
+
+## 🏗 Architecture
+
 ```
-http://localhost:3000/api
+Frontend (Checkout UI)
+         ↓
+Express.js Backend
+         ↓
+Payment Processors (MercadoPago/PayPal)
+         ↓
+Webhooks → Database → Jumpseller
 ```
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ 
+- TypeScript
+- Git
+
+### Installation
+
+1. **Clone repository**
+```bash
+git clone <repository-url>
+cd payment-gateway-demo/backend
+```
+
+2. **Install dependencies**
+```bash
+npm install
+# or
+yarn install
+```
+
+3. **Environment setup**
+```bash
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+4. **Database setup** (if using Prisma)
+```bash
+npx prisma generate
+npx prisma migrate dev
+```
+
+5. **Run development server**
+```bash
+npm run dev
+```
+
+6. **Build for production**
+```bash
+npm run build
+npm start
+```
+
+## 🌐 Base URLs
+- **Development**: `http://localhost:3000`
+- **API Base**: `http://localhost:3000/api`
+- **Checkout UI**: `http://localhost:3000/index.html`
 
 ## Health Check
 
@@ -227,23 +292,105 @@ Todos los endpoints pueden retornar los siguientes errores:
 - Rate limiting implementado
 - Headers de seguridad con Helmet
 
-## Environment Variables Required
+## ⚙️ Configuración del Entorno
 
-### MercadoPago
-```
-DEV_ACCESS_TOKEN_MP=your_mercadopago_access_token
-BASE_URL=http://localhost:3000
-```
+### Variables de Entorno Requeridas
 
-### PayPal
-```
-CLIENT_ID_PAYPAL=your_paypal_client_id
-SECRET_KEY_PAYPAL=your_paypal_secret_key
-URL_API_PAYPAL=https://api.sandbox.paypal.com (sandbox) o https://api.paypal.com (production)
-```
-
-### General
-```
-FRONTEND_URL=http://localhost:5173
+```bash
+# Configuración del Servidor
+NODE_ENV=development
 PORT=3000
+FRONTEND_URL=http://localhost:5173
+
+# Base de Datos (PostgreSQL)
+DATABASE_URL=postgresql://user:password@localhost:5432/payment_gateway
+
+# Redis (para caché y colas)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Seguridad JWT
+JWT_SECRET=tu-clave-jwt-super-secreta-cambiar-en-produccion
+
+# Integración Jumpseller
+JUMPSELLER_PAYMENT_SECRET=external_payment_gateway_password
+JUMPSELLER_ACCOUNT_ID=tu_account_id
+
+# Credenciales MercadoPago
+MERCADOPAGO_ACCESS_TOKEN_AR=TEST-xxxxx-AR  # Argentina
+MERCADOPAGO_ACCESS_TOKEN_MX=TEST-xxxxx-MX  # México  
+MERCADOPAGO_ACCESS_TOKEN_CL=TEST-xxxxx-CL  # Chile
+DEV_ACCESS_TOKEN_MP=TEST-xxxxx-DEV         # Desarrollo
+PROD_ACCES_TOKEN_MP=APP_USR-xxxxx-PROD     # Producción
+
+# Credenciales PayPal
+PAYPAL_CLIENT_ID=tu-paypal-client-id
+PAYPAL_CLIENT_SECRET=tu-paypal-secret
+PAYPAL_MODE=sandbox  # o 'live' para producción
+CLIENT_ID_PAYPAL=tu-paypal-client-id       # Soporte legacy
+SECRET_KEY_PAYPAL=tu-paypal-secret         # Soporte legacy
+URL_API_PAYPAL=https://api.sandbox.paypal.com
+
+# Seguridad HMAC
+SECRET_HMAC=tu-clave-hmac-segura
+
+# Binance Pay (Opcional)
+BINANCE_PAY_API_KEY=tu-api-key
+BINANCE_PAY_SECRET=tu-secret-key
+BINANCE_PAY_MODE=sandbox
+
+# API de Tipos de Cambio
+EXCHANGE_RATE_API_KEY=tu-api-key
+```
+
+## 🔧 Cómo Funciona
+
+### Flujo de Pago
+
+1. **Iniciar Pago**
+   ```
+   POST /api/payment/ → Muestra la interfaz de checkout
+   ```
+
+2. **Usuario Selecciona Método de Pago**
+   - PayPal (con cuenta o guest checkout)
+   - MercadoPago (por país)
+
+3. **Procesamiento del Pago**
+   ```
+   POST /api/payment/paypal → API de Órdenes PayPal
+   POST /api/payment/mercadopago → API de Preferencias MercadoPago
+   ```
+
+4. **Usuario Completa el Pago**
+   - Redirigido al procesador de pagos
+   - Completa pago/autenticación
+
+5. **Notificación por Webhook**
+   ```
+   POST /api/payment/paypal/webhook
+   POST /api/payment/mercadopago/webhook
+   ```
+
+6. **Finalización**
+   ```
+   POST /api/payment/completed → Página de éxito
+   ```
+
+### Integración Frontend
+
+La interfaz de checkout (`/src/public/index.html`) proporciona:
+- **Diseño Responsivo**: Enfoque mobile-first
+- **Carga Dinámica**: SDK de PayPal cargado con variables de entorno
+- **Manejo de Errores**: Mensajes de error amigables
+- **Guest Checkout**: Pagos PayPal sin crear cuenta
+
+### Monitoreo de Salud
+```bash
+GET /health
+{
+  "status": "ok",
+  "timestamp": "2023-10-23T12:00:00.000Z",
+  "version": "1.0.0"
+}
 ```
