@@ -37,10 +37,10 @@ export function validateJumpsellerSignature(
 
   const sortedKeys = Object.keys(xParams).sort();
 
-
+  // Concatenate without separators as per Jumpseller docs
   const concatenatedString = sortedKeys
-    .map(key => `${key}+${xParams[key]}`)
-    .join('+');
+    .map(key => `${key}${xParams[key]}`)
+    .join('');
 
   logger.debug('HMAC validation string:', concatenatedString);
 
@@ -75,9 +75,10 @@ export function generateJumpsellerSignature(
 
   const sortedKeys = Object.keys(xParams).sort();
 
+  // Concatenate without separators as per Jumpseller docs
   const concatenatedString = sortedKeys
-    .map(key => `${key}+${xParams[key]}`)
-    .join('+');
+    .map(key => `${key}${xParams[key]}`)
+    .join('');
 
   logger.debug('Generating HMAC for string:', concatenatedString);
 

@@ -46,20 +46,27 @@ function initializePayPal() {
         }]
       });
     },
-    onApprove: function (_, actions) {
-      return actions.order.capture().then(async function (orderData) {
-        if (orderData.status === 'COMPLETED') {
-          const res = await fetch('/api/payment/completed', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(paymentData)
-          })
-          const data = await res.json()
-          if (data.success) window.location.href = data.url
-        }
+    onApprove: async function (data) {
+      // Send orderId to backend for capture and Jumpseller notification
+      const res = await fetch('/api/payment/completed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          orderId: data.orderID,  // PayPal order ID
+          ...paymentData          // Jumpseller data
+        })
       });
+
+      const result = await res.json();
+      if (result.success) {
+        // Redirect to Jumpseller complete URL
+        window.location.href = result.redirectUrl || result.url;
+      } else {
+        alert('Error al procesar el pago');
+        console.error('Payment error:', result);
+      }
     },
     onCancel: function (data) {
       console.log('Payment cancelled:', data);
