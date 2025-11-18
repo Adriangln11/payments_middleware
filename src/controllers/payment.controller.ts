@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import logger from '../config/logger';
 import { MercadoPagoService } from '../services/mercadopago.service';
 import { PayPalService } from '../services/paypal.service';
+import { JumpsellerService } from '../services/jumpseller.service';
 import { JumpSellerRequest } from '@/types/jumpseller';
 
 const mockData = {
@@ -163,13 +164,53 @@ export class PaymentController {
   static async paymentCompleted(req: Request, res: Response) {
 
     try {
+      const { orderId, ...jumpsellerData } = req.body;
 
-      logger.info('Payment completed, redirecting to completed page (payment.controller)', { x_reference: req.body.x_reference })
-      const data = req.body
-      const params = new URLSearchParams(data).toString()
+      logger.info('Payment completed (payment.controller)', {
+        x_reference: jumpsellerData.x_reference,
+        orderId
+      });
 
-      const url = `/completed.html?${params}`
-      return res.status(200).json({ success: true, url })
+      if (!orderId || !jumpsellerData.x_reference) {
+        logger.error('Missing orderId or x_reference');
+        return res.status(400).json({ error: 'Missing orderId or x_reference' });
+      }
+
+      // Save order to database if not exists
+      await JumpsellerService.saveOrder(jumpsellerData as JumpSellerRequest, 'paypal_card', orderId);
+
+      // Capture the PayPal payment
+      const captureResult = await PayPalService.capturePayment(orderId);
+
+      if (captureResult.status === 'COMPLETED') {
+        // Notify Jumpseller
+        const notified = await JumpsellerService.notifyPaymentComplete(
+          jumpsellerData.x_reference,
+          'completed',
+          `PayPal card payment ${orderId} completed successfully`
+        );
+
+        if (notified) {
+          logger.info('Jumpseller notified of card payment', {
+            reference: jumpsellerData.x_reference,
+            orderId
+          });
+        } else {
+          logger.error('Failed to notify Jumpseller of card payment', {
+            reference: jumpsellerData.x_reference
+          });
+        }
+
+        const url = `/completed.html?x_reference=${jumpsellerData.x_reference}`;
+        return res.status(200).json({
+          success: true,
+          url,
+          redirectUrl: jumpsellerData.x_url_complete
+        });
+      } else {
+        logger.error('PayPal capture failed', { orderId, status: captureResult.status });
+        return res.status(400).json({ error: 'Payment capture failed' });
+      }
     }
     catch (error) {
       logger.error('Error completing payment (payment.controller)', { error })
