@@ -5,7 +5,7 @@
   "main": "dist/app.js",
   "scripts": {
     "dev": "tsx watch src/app.ts",
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "start": "node dist/app.js",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
@@ -36,6 +36,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.8.10",
     "prisma": "^5.6.0",
+    "tsc-alias": "^1.8.8",
     "tsx": "^4.1.4",
     "typescript": "^5.2.2"
   }
