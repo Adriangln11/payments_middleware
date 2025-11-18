@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Order {
+  id                    String   @id @default(uuid())
+  jumpsellerReference   String   @unique
+  xAccountId            String   // Required for Jumpseller response
+  shopName              String
+  originalAmount        Float
+  originalCurrency      String
+  convertedAmount       Float?
+  convertedCurrency     String?
+  status                String   // pending, processing, completed, failed, cancelled
+  paymentGateway        String?  // mercadopago_ar, paypal, binance_pay
+  gatewayTransactionId  String?
+  xUrlComplete          String
+  xUrlCancel            String
+  xUrlCallback          String
+  metadata              String?  // JSON as string for SQLite
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  logs                  TransactionLog[]
+  callbacks             CallbackRetry[]
+
+  @@map("orders")
+}
+
+model GatewayConfig {
+  id            String   @id @default(uuid())
+  shopName      String
+  gatewayType   String
+  countryCode   String
+  currency      String
+  credentials   String   // JSON as string, encrypted
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@unique([shopName, gatewayType, countryCode])
+  @@map("gateway_configs")
+}
+
+model TransactionLog {
+  id           String   @id @default(uuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id])
+  eventType    String   // webhook_received, payment_initiated, payment_completed
+  gateway      String
+  requestData  String?  // JSON as string
+  responseData String?  // JSON as string
+  createdAt    DateTime @default(now())
+
+  @@map("transaction_logs")
+}
+
+model CallbackRetry {
+  id            String    @id @default(uuid())
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id])
+  callbackUrl   String
+  attemptNumber Int
+  statusCode    Int?
+  responseBody  String?
+  nextRetryAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@map("callback_retries")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
