@@ -3,6 +3,7 @@ import logger from '../config/logger';
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago'
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { JumpsellerService } from './jumpseller.service';
 dotenv.config();
 
 export class MercadoPagoService {
@@ -10,6 +11,7 @@ export class MercadoPagoService {
   private static client = new MercadoPagoConfig({
     accessToken: process.env.DEV_ACCESS_TOKEN_MP || '',
   })
+
   static async createTransaction(data: JumpSellerRequest) {
 
     try {
@@ -17,6 +19,7 @@ export class MercadoPagoService {
         x_account_id: data.x_account_id,
         x_reference: data.x_reference
       })
+
       const preference = await new Preference(this.client).create({
         body: {
           items: [
@@ -42,41 +45,7 @@ export class MercadoPagoService {
               street_number: data.x_customer_shipping_address2
             },
           },
-          // "payment_methods": {
-          //   "excluded_payment_methods": [
-          //     {
-          //       "id": "master"
-          //     }
-          //   ],
-          //   "excluded_payment_types": [
-          //     {
-          //       "id": "ticket"
-          //     }
-          //   ],
-          //   "default_payment_method_id": "amex",
-          //   "installments": 10,
-          //   "default_installments": 5
-          // },
-          // "shipments": {
-          //   "local_pickup": false,
-          //   "dimensions": "32 x 25 x 16",
-          //   "default_shipping_method": null,
-          //   "free_methods": [
-          //     {
-          //       "id": null
-          //     }
-          //   ],
-          //   "cost": 20,
-          //   "free_shipping": false,
-          //   "receiver_address": {
-          //     "zip_code": "72549555",
-          //     "street_name": "Street address test",
-          //     "city_name": "São Paulo",
-          //     "state_name": "São Paulo",
-          //     "street_number": 100,
-          //     "country_name": "Brazil"
-          //   }
-          // },
+          external_reference: data.x_reference, // Store Jumpseller reference
           back_urls: {
             success: data.x_url_complete,
             pending: data.x_url_callback,
@@ -88,10 +57,16 @@ export class MercadoPagoService {
           }
         }
       })
+
+      // Save order to database with preference ID
+      await JumpsellerService.saveOrder(data, 'mercadopago', preference.id);
+
       logger.info('MercadoPago preference created successfully', {
         x_account_id: data.x_account_id,
-        x_reference: data.x_reference
+        x_reference: data.x_reference,
+        preference_id: preference.id
       })
+
       return preference.init_point;
 
     } catch (error) {
@@ -118,12 +93,43 @@ export class MercadoPagoService {
           }
         })
 
-        if (res.data.order_status === 'paid') {
-          logger.info('Preference paid successfuly', {
-            id: res.data.id,
-            preference_id: res.data.preference_id,
-            paid_amount: res.data.paid_amount
+        const merchantOrder = res.data;
+
+        if (merchantOrder.order_status === 'paid') {
+          logger.info('Preference paid successfully', {
+            id: merchantOrder.id,
+            preference_id: merchantOrder.preference_id,
+            paid_amount: merchantOrder.paid_amount,
+            external_reference: merchantOrder.external_reference
           })
+
+          // Get the Jumpseller reference from external_reference
+          const reference = merchantOrder.external_reference;
+
+          if (reference) {
+            // Notify Jumpseller of successful payment
+            const notified = await JumpsellerService.notifyPaymentComplete(
+              reference,
+              'completed',
+              `MercadoPago payment completed - Order ${merchantOrder.id}`
+            );
+
+            if (notified) {
+              logger.info('Jumpseller notified of MercadoPago payment', {
+                reference,
+                merchantOrderId: merchantOrder.id
+              });
+            } else {
+              logger.error('Failed to notify Jumpseller', {
+                reference,
+                merchantOrderId: merchantOrder.id
+              });
+            }
+          } else {
+            logger.warn('No external_reference found in merchant order', {
+              merchantOrderId: merchantOrder.id
+            });
+          }
         }
         return
       }
@@ -131,42 +137,54 @@ export class MercadoPagoService {
       if (data.topic === 'payment') {
         logger.info('Received payment notification', { resource: data.resource })
 
+        // Get payment details
+        const paymentRes = await axios.get(data.resource, {
+          headers: {
+            'Authorization': `Bearer ${process.env.DEV_ACCESS_TOKEN_MP}`,
+          }
+        })
+
+        const payment = paymentRes.data;
+
+        logger.info('Payment details', {
+          id: payment.id,
+          status: payment.status,
+          external_reference: payment.external_reference
+        })
+
+        // Handle payment based on status
+        if (payment.status === 'approved' && payment.external_reference) {
+          const notified = await JumpsellerService.notifyPaymentComplete(
+            payment.external_reference,
+            'completed',
+            `MercadoPago payment ${payment.id} approved`
+          );
+
+          if (notified) {
+            logger.info('Jumpseller notified of MercadoPago payment (via payment webhook)', {
+              reference: payment.external_reference,
+              paymentId: payment.id
+            });
+          }
+        } else if (payment.status === 'rejected' && payment.external_reference) {
+          await JumpsellerService.notifyPaymentComplete(
+            payment.external_reference,
+            'failed',
+            `MercadoPago payment ${payment.id} rejected`
+          );
+        } else if (payment.status === 'pending' && payment.external_reference) {
+          await JumpsellerService.notifyPaymentComplete(
+            payment.external_reference,
+            'pending',
+            `MercadoPago payment ${payment.id} pending`
+          );
+        }
       }
 
     } catch (error) {
-      logger.error('Error completing transaction', { data })
+      logger.error('Error completing transaction', { data, error })
       throw error;
     }
-
-    // if (data.topic !== 'payment' && !data.data?.id) {
-    //   logger.warn('Unknown webhook type', { data })
-    //   return;
-    // }
-
-    // console.log('Payment data:', data)
-    // logger.info('Payment ID from webhook', { id: data.data.id })
-    // const id = data.data.id
-    // console.log('Payment ID from webhook', id)
-    //const payment = await new Payment(this.client).get({ id });
-    //logger.info('Payment found', { payment })
-
-
-    // if (!payment) {
-    //   logger.error('Payment not found', { id })
-    //   return
-    // }
-
-    // logger.info('Payment found', { payment })
-
-    // if (payment.status === 'approved') {
-    //   // if (exist) {
-    //   //   logger.error('Payment already exist', { id })
-    //   //   throw new Error('Payment already exist');
-    //   // }
-    //   logger.info('Payment completed and approved', { id })
-    // }
-    // logger.info('Payment completed but declined', { id })
-    // return
 
   }
 }

@@ -11,7 +11,9 @@ export interface JumpsellerParams {
   x_url_callback: string;
   x_account_id: string;
   x_signature?: string;
-  [key: string]: any;
+  x_result?: string;
+  x_timestamp?: string;
+  x_message?: string;
 }
 
 export function validateJumpsellerSignature(
@@ -43,7 +45,7 @@ export function validateJumpsellerSignature(
   logger.debug('HMAC validation string:', concatenatedString);
 
   const calculatedSignature = crypto
-    .createHmac('sha256', process.env.SECRET_HMAC!)
+    .createHmac('sha256', process.env.SECRET_KEY!)
     .update(concatenatedString)
     .digest('hex');
 
@@ -80,7 +82,7 @@ export function generateJumpsellerSignature(
   logger.debug('Generating HMAC for string:', concatenatedString);
 
   return crypto
-    .createHmac('sha256', process.env.SECRET_HMAC!)
+    .createHmac('sha256', process.env.SECRET_KEY!)
     .update(concatenatedString)
     .digest('hex');
 }

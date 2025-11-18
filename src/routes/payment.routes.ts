@@ -18,4 +18,6 @@ router.post('/paypal/webhook', PaymentController.paypalWebhook)
 
 router.get('/paypal/config', PaymentController.getPayPalConfig)
 
+router.get('/paypal/success', PaymentController.paypalSuccess)
+
 export default router;

@@ -131,6 +131,35 @@ export class PaymentController {
     return res.status(200).json({ success: true });
   }
 
+  static async paypalSuccess(req: Request, res: Response) {
+    try {
+      const { token, reference } = req.query;
+
+      logger.info('PayPal success redirect received', { token, reference });
+
+      if (!token || !reference) {
+        logger.error('Missing token or reference in PayPal success redirect');
+        return res.status(400).json({ error: 'Missing token or reference' });
+      }
+
+      const result = await PayPalService.handlePaymentSuccess(
+        token as string,
+        reference as string
+      );
+
+      if (result.success && result.redirectUrl) {
+        logger.info('Redirecting to Jumpseller complete URL', { url: result.redirectUrl });
+        return res.redirect(result.redirectUrl);
+      } else {
+        logger.error('PayPal payment failed', { result });
+        return res.status(400).json({ error: result.error || 'Payment failed' });
+      }
+    } catch (error) {
+      logger.error('Error processing PayPal success', { error });
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
   static async paymentCompleted(req: Request, res: Response) {
 
     try {
@@ -166,5 +195,6 @@ export class PaymentController {
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
+
 }
 
