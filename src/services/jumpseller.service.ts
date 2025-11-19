@@ -8,18 +8,15 @@ export type PaymentResult = 'completed' | 'pending' | 'failed';
 
 export class JumpsellerService {
 
-  /**
-   * Save order data from Jumpseller to database
-   */
+
   static async saveOrder(data: JumpSellerRequest, paymentGateway: string, gatewayTransactionId?: string) {
     try {
-      // Check if order already exists
       const existingOrder = await prisma.order.findUnique({
         where: { jumpsellerReference: data.x_reference }
       });
 
       if (existingOrder) {
-        logger.info('Order already exists, updating...', { reference: data.x_reference });
+        logger.info('Order already exists, updating... (jumseller.service)', { reference: data.x_reference });
         return prisma.order.update({
           where: { jumpsellerReference: data.x_reference },
           data: {
@@ -47,21 +44,18 @@ export class JumpsellerService {
         }
       });
 
-      logger.info('Order saved to database', {
+      logger.info('Order saved to database (jumseller.service)', {
         orderId: order.id,
         reference: data.x_reference
       });
 
       return order;
     } catch (error) {
-      logger.error('Error saving order to database', { error, reference: data.x_reference });
+      logger.error('Error saving order to database (jumseller.service)', { error, reference: data.x_reference });
       throw error;
     }
   }
 
-  /**
-   * Update order with gateway transaction ID
-   */
   static async updateOrderGatewayId(reference: string, gatewayTransactionId: string) {
     try {
       const order = await prisma.order.update({
@@ -69,39 +63,30 @@ export class JumpsellerService {
         data: { gatewayTransactionId }
       });
 
-      logger.info('Order updated with gateway transaction ID', {
+      logger.info('Order updated with gateway transaction ID (jumseller.service)', {
         orderId: order.id,
         gatewayTransactionId
       });
 
       return order;
     } catch (error) {
-      logger.error('Error updating order gateway ID', { error, reference });
+      logger.error('Error updating order gateway ID (jumseller.service)', { error, reference });
       throw error;
     }
   }
 
-  /**
-   * Get order by reference
-   */
   static async getOrderByReference(reference: string) {
     return prisma.order.findUnique({
       where: { jumpsellerReference: reference }
     });
   }
 
-  /**
-   * Get order by gateway transaction ID
-   */
   static async getOrderByGatewayId(gatewayTransactionId: string) {
     return prisma.order.findFirst({
       where: { gatewayTransactionId }
     });
   }
 
-  /**
-   * Notify Jumpseller about payment completion with retry logic
-   */
   static async notifyPaymentComplete(
     reference: string,
     result: PaymentResult = 'completed',
@@ -110,7 +95,7 @@ export class JumpsellerService {
     const order = await this.getOrderByReference(reference);
 
     if (!order) {
-      logger.error('Order not found for notification', { reference });
+      logger.error('Order not found for notification (jumseller.service)', { reference });
       throw new Error(`Order not found: ${reference}`);
     }
 
@@ -132,14 +117,13 @@ export class JumpsellerService {
     const hmacSignature = generateJumpsellerSignature(dataToSign);
     const payload = { ...dataToSign, x_signature: hmacSignature };
 
-    logger.info('Notifying Jumpseller', {
+    logger.info('Notifying Jumpseller (jumseller.service)', {
       reference,
       result,
       callbackUrl: order.xUrlCallback,
       payload
     });
 
-    // Retry logic - minimum 3 attempts as required by Jumpseller
     const maxRetries = 3;
     let lastError: Error | null = null;
 
@@ -152,7 +136,6 @@ export class JumpsellerService {
           timeout: 10000
         });
 
-        // Log callback attempt
         await prisma.callbackRetry.create({
           data: {
             orderId: order.id,
@@ -164,13 +147,13 @@ export class JumpsellerService {
         });
 
         if (response.status === 200) {
-          // Update order status
+
           await prisma.order.update({
             where: { id: order.id },
             data: { status: result }
           });
 
-          logger.info('Jumpseller notification successful', {
+          logger.info('Jumpseller notification successful (jumseller.service)', {
             reference,
             attempt,
             status: response.status
@@ -181,7 +164,6 @@ export class JumpsellerService {
       } catch (error) {
         lastError = error as Error;
 
-        // Log failed attempt
         await prisma.callbackRetry.create({
           data: {
             orderId: order.id,
@@ -193,20 +175,19 @@ export class JumpsellerService {
           }
         });
 
-        logger.warn('Jumpseller notification failed, retrying...', {
+        logger.warn('Jumpseller notification failed, retrying... (jumseller.service)', {
           reference,
           attempt,
           error: (error as Error).message
         });
 
-        // Wait before retry (exponential backoff)
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, attempt * 2000));
         }
       }
     }
 
-    logger.error('All Jumpseller notification attempts failed', {
+    logger.error('All Jumpseller notification attempts failed (jumseller.service)', {
       reference,
       error: lastError?.message
     });
@@ -214,10 +195,6 @@ export class JumpsellerService {
     return false;
   }
 
-  /**
-   * Legacy method - kept for compatibility
-   * @deprecated Use notifyPaymentComplete instead
-   */
   static async completeOrder(data: JumpSellerRequest, status: string) {
     try {
       logger.info('Processing jumpseller callback (jumpseller.service)', { x_reference: data.x_reference, status });
@@ -248,9 +225,6 @@ export class JumpsellerService {
     }
   }
 
-  /**
-   * Log transaction event
-   */
   static async logTransaction(
     orderId: string,
     eventType: string,

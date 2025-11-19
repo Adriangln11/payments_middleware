@@ -9,7 +9,7 @@ export class PayPalService {
   static async createTransaction(order: JumpSellerRequest) {
 
     try {
-      logger.info('Processing PayPal payment', { reference: order.x_reference })
+      logger.info('Processing PayPal payment (paypal.service)', { reference: order.x_reference })
 
       logger.info('Generating paypal token')
 
@@ -26,7 +26,6 @@ export class PayPalService {
         }
       )
 
-      // Use our backend URL for return/cancel to handle the callback
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
       const formatedOrder = {
@@ -45,7 +44,7 @@ export class PayPalService {
         },
         purchase_units: [
           {
-            reference_id: order.x_reference, // Store Jumpseller reference
+            reference_id: order.x_reference,
             amount: {
               currency_code: order.x_currency,
               value: order.x_amount
@@ -60,27 +59,23 @@ export class PayPalService {
         }
       })
 
-      // Save order to database with PayPal order ID
       await JumpsellerService.saveOrder(order, 'paypal', res.data.id);
 
-      logger.info('PayPal order created and saved', {
+      logger.info('PayPal order created and saved (paypal.service)', {
         reference: order.x_reference,
         paypalOrderId: res.data.id
       });
 
       return res.data;
     } catch (error) {
-      logger.error('Error processing PayPal payment', { reference: order.x_reference, error })
+      logger.error('Error processing PayPal payment (paypal.service)', { reference: order.x_reference, error })
       throw error;
     }
   }
 
-  /**
-   * Capture PayPal payment after user approval
-   */
   static async capturePayment(paypalOrderId: string) {
     try {
-      logger.info('Capturing PayPal payment', { paypalOrderId });
+      logger.info('Capturing PayPal payment (paypal.service)', { paypalOrderId });
 
       const params = new URLSearchParams();
       params.append('grant_type', 'client_credentials');
@@ -106,30 +101,26 @@ export class PayPalService {
         }
       );
 
-      logger.info('PayPal payment captured', {
+      logger.info('PayPal payment captured (paypal.service)', {
         paypalOrderId,
         status: res.data.status
       });
 
       return res.data;
     } catch (error) {
-      logger.error('Error capturing PayPal payment', { paypalOrderId, error });
+      logger.error('Error capturing PayPal payment (paypal.service)', { paypalOrderId, error });
       throw error;
     }
   }
 
-  /**
-   * Handle PayPal success redirect - capture payment and notify Jumpseller
-   */
   static async handlePaymentSuccess(paypalOrderId: string, reference: string) {
     try {
-      logger.info('Handling PayPal payment success', { paypalOrderId, reference });
+      logger.info('Handling PayPal payment success (paypal.service)', { paypalOrderId, reference });
 
-      // Capture the payment
       const captureResult = await this.capturePayment(paypalOrderId);
 
       if (captureResult.status === 'COMPLETED') {
-        // Notify Jumpseller
+
         const notified = await JumpsellerService.notifyPaymentComplete(
           reference,
           'completed',
@@ -137,50 +128,44 @@ export class PayPalService {
         );
 
         if (notified) {
-          logger.info('Jumpseller notified of PayPal payment', { reference, paypalOrderId });
+          logger.info('Jumpseller notified of PayPal payment (paypal.service)', { reference, paypalOrderId });
         } else {
-          logger.error('Failed to notify Jumpseller', { reference, paypalOrderId });
+          logger.error('Failed to notify Jumpseller (paypal.service)', { reference, paypalOrderId });
         }
 
-        // Get order to return the complete URL
         const order = await JumpsellerService.getOrderByReference(reference);
         return {
           success: true,
           redirectUrl: order?.xUrlComplete
         };
       } else {
-        logger.warn('PayPal payment not completed', { paypalOrderId, status: captureResult.status });
+        logger.warn('PayPal payment not completed (paypal.service)', { paypalOrderId, status: captureResult.status });
         return {
           success: false,
           error: 'Payment not completed'
         };
       }
     } catch (error) {
-      logger.error('Error handling PayPal payment success', { paypalOrderId, reference, error });
+      logger.error('Error handling PayPal payment success (paypal.service)', { paypalOrderId, reference, error });
       throw error;
     }
   }
 
   static async completeTransaction(webhookData: any) {
     try {
-      logger.info('Processing PayPal webhook', { eventType: webhookData.event_type })
+      logger.info('Processing PayPal webhook (paypal.service)', { eventType: webhookData.event_type })
 
       switch (webhookData.event_type) {
         case 'PAYMENT.CAPTURE.COMPLETED':
-          logger.info('Payment completed via webhook', {
+          logger.info('Payment completed via webhook (paypal.service)', {
             paymentId: webhookData.resource.id,
             amount: webhookData.resource.amount
           });
-
-          // Try to find the order by the PayPal order ID
-          // Note: The webhook contains capture ID, not order ID
-          // We may need to handle this differently based on your flow
           break;
 
         case 'PAYMENT.CAPTURE.DENIED':
-          logger.info('Payment denied', { paymentId: webhookData.resource.id });
+          logger.info('Payment denied (paypal.service)', { paymentId: webhookData.resource.id });
 
-          // Find order and notify Jumpseller of failure
           const deniedOrder = await JumpsellerService.getOrderByGatewayId(webhookData.resource.id);
           if (deniedOrder) {
             await JumpsellerService.notifyPaymentComplete(
@@ -192,15 +177,15 @@ export class PayPalService {
           break;
 
         case 'CHECKOUT.ORDER.APPROVED':
-          logger.info('Order approved', { orderId: webhookData.resource.id });
+          logger.info('Order approved (paypal.service)', { orderId: webhookData.resource.id });
           break;
 
         default:
-          logger.info('Unhandled PayPal event', { eventType: webhookData.event_type });
+          logger.info('Unhandled PayPal event (paypal.service)', { eventType: webhookData.event_type });
       }
 
     } catch (error) {
-      logger.error('Error processing PayPal webhook', {
+      logger.error('Error processing PayPal webhook (paypal.service)', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

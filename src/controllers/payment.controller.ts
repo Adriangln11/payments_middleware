@@ -176,14 +176,12 @@ export class PaymentController {
         return res.status(400).json({ error: 'Missing orderId or x_reference' });
       }
 
-      // Save order to database if not exists
       await JumpsellerService.saveOrder(jumpsellerData as JumpSellerRequest, 'paypal_card', orderId);
 
-      // Capture the PayPal payment
       const captureResult = await PayPalService.capturePayment(orderId);
 
       if (captureResult.status === 'COMPLETED') {
-        // Notify Jumpseller
+
         const notified = await JumpsellerService.notifyPaymentComplete(
           jumpsellerData.x_reference,
           'completed',
@@ -200,12 +198,13 @@ export class PaymentController {
             reference: jumpsellerData.x_reference
           });
         }
+        const params = new URLSearchParams(jumpsellerData).toString()
 
-        const url = `/completed.html?x_reference=${jumpsellerData.x_reference}`;
+        const url = `/completed.html?${params}`
         return res.status(200).json({
           success: true,
           url,
-          redirectUrl: jumpsellerData.x_url_complete
+          redirectUrl: url
         });
       } else {
         logger.error('PayPal capture failed', { orderId, status: captureResult.status });

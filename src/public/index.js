@@ -47,21 +47,19 @@ function initializePayPal() {
       });
     },
     onApprove: async function (data) {
-      // Send orderId to backend for capture and Jumpseller notification
       const res = await fetch('/api/payment/completed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          orderId: data.orderID,  // PayPal order ID
-          ...paymentData          // Jumpseller data
+          orderId: data.orderID,
+          ...paymentData
         })
       });
 
       const result = await res.json();
       if (result.success) {
-        // Redirect to Jumpseller complete URL
         window.location.href = result.redirectUrl || result.url;
       } else {
         alert('Error al procesar el pago');
